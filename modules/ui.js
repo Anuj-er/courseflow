@@ -33,6 +33,7 @@
     const btnGetAnswers = host.shadowRoot.querySelector("#btnGetAnswers");
     const btnMemorize = host.shadowRoot.querySelector("#btnMemorize");
     
+    const url = window.location.href;
     const isAttemptPage = window.location.pathname.includes('/attempt');
     const isFeedbackPage = window.location.pathname.includes('/view-feedback');
     const isPeerReviewPage = window.location.pathname.includes('/give-feedback') || window.location.pathname.includes('/review-next');
@@ -42,12 +43,22 @@
       if (skipBtn) skipBtn.hidden = true;
       if (assignmentUI) {
         assignmentUI.hidden = false;
-        if (btnGetAnswers) btnGetAnswers.hidden = !isAttemptPage;
+        
+        const btnGetAnswers = host.shadowRoot.querySelector("#btnGetAnswers");
         const btnCopyQuestions = host.shadowRoot.querySelector("#btnCopyQuestions");
+        if (btnGetAnswers) btnGetAnswers.hidden = !isAttemptPage;
         if (btnCopyQuestions) btnCopyQuestions.hidden = !isAttemptPage;
-        if (btnMemorize) btnMemorize.hidden = !isFeedbackPage;
+
+        const btnMemorize = host.shadowRoot.querySelector("#btnMemorize");
+        const btnCopyMistakes = host.shadowRoot.querySelector("#btnCopyMistakes");
+        // Only show mistake buttons if we are on a page that shows grades/mistakes
+        const isReviewingMistakes = document.querySelectorAll('[data-testid="icon-incorrect"]').length > 0 || isFeedbackPage;
+        if (btnMemorize) btnMemorize.hidden = !isReviewingMistakes;
+        if (btnCopyMistakes) btnCopyMistakes.hidden = !isReviewingMistakes;
+        
         const btnGradePeer = host.shadowRoot.querySelector("#btnGradePeer");
         if (btnGradePeer) btnGradePeer.hidden = !isPeerReviewPage;
+        
         const scoreToggleWrapper = host.shadowRoot.querySelector("#scoreToggleWrapper");
         if (scoreToggleWrapper) scoreToggleWrapper.hidden = !isPeerReviewPage;
       }
@@ -281,7 +292,7 @@
 
         .assignment-helper-ui[hidden] { display: none; }
 
-        .btn-get-answers, .btn-memorize, .btn-grade-peer, .btn-copy, .btn-score-toggle {
+        .btn-get-answers, .btn-memorize, .btn-grade-peer, .btn-copy, .btn-copy-mistakes, .btn-score-toggle {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -298,6 +309,7 @@
         
         .btn-get-answers { color: #10B981; }
         .btn-memorize { color: #8B5CF6; }
+        .btn-copy-mistakes { color: #EF4444; }
         .btn-grade-peer { color: #F59E0B; }
         .btn-copy { color: #6B7280; }
 
@@ -340,7 +352,7 @@
           position: absolute;
           cursor: pointer;
           top: 0; left: 0; right: 0; bottom: 0;
-          background-color: #F59E0B; /* Same color, doesn't change */
+          background-color: #F59E0B;
           transition: .3s;
           border-radius: 16px;
         }
@@ -357,7 +369,7 @@
           box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         input:checked + .slider {
-          background-color: #F59E0B; /* Stays exactly the same */
+          background-color: #F59E0B;
         }
         input:checked + .slider:before {
           transform: translateX(12px);
@@ -365,26 +377,27 @@
 
         .btn-get-answers:hover { background: #ECFDF5; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
         .btn-memorize:hover { background: #F5F3FF; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
+        .btn-copy-mistakes:hover { background: #FEF2F2; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
         .btn-grade-peer:hover { background: #FFFBEB; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
         .btn-copy:hover { background: #F3F4F6; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
 
-        .btn-get-answers:active, .btn-memorize:active, .btn-grade-peer:active, .btn-copy:active {
+        .btn-get-answers:active, .btn-memorize:active, .btn-copy-mistakes:active, .btn-grade-peer:active, .btn-copy:active {
           transform: scale(0.92);
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         
-        .btn-get-answers svg, .btn-memorize svg, .btn-grade-peer svg, .btn-copy svg {
+        .btn-get-answers svg, .btn-memorize svg, .btn-copy-mistakes svg, .btn-grade-peer svg, .btn-copy svg {
           width: 28px;
           height: 28px;
           fill: currentColor;
         }
 
-        .btn-get-answers:disabled, .btn-memorize:disabled, .btn-grade-peer:disabled, .btn-copy:disabled {
+        .btn-get-answers:disabled, .btn-memorize:disabled, .btn-copy-mistakes:disabled, .btn-grade-peer:disabled, .btn-copy:disabled {
           opacity: 0.7;
           cursor: wait;
           animation: btnPulse 1s infinite ease-in-out;
         }
-        .btn-get-answers[hidden], .btn-memorize[hidden], .btn-grade-peer[hidden], .btn-copy[hidden], .score-toggle-wrapper[hidden] { display: none; }
+        .btn-get-answers[hidden], .btn-memorize[hidden], .btn-copy-mistakes[hidden], .btn-grade-peer[hidden], .btn-copy[hidden], .score-toggle-wrapper[hidden] { display: none; }
 
         .answers-div {
           background: #ffffff;
@@ -425,6 +438,9 @@
           </button>
           <button id="btnGetAnswers" class="btn-get-answers" hidden title="Get AI Answers">
             <svg viewBox="0 0 24 24"><path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z"/></svg>
+          </button>
+          <button id="btnCopyMistakes" class="btn-copy-mistakes" hidden title="Copy Mistakes">
+            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14zm-4-4.59L10.59 15l2.41 2.41L15.41 15 17 16.59l-2.41 2.41L17 21.41 15.41 23l-2.41-2.41L10.59 23 9 21.41l2.41-2.41L9 16.59z"/></svg>
           </button>
           <button id="btnMemorize" class="btn-memorize" hidden title="Memorize Mistakes">
             <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
@@ -471,6 +487,7 @@
     document.documentElement.append(host);
     
     const btnMemorize = shadow.querySelector("#btnMemorize");
+    const btnCopyMistakes = shadow.querySelector("#btnCopyMistakes");
     const btnGetAnswers = shadow.querySelector("#btnGetAnswers");
     const btnCopyQuestions = shadow.querySelector("#btnCopyQuestions");
     const answersDiv = shadow.querySelector("#answersDiv");
@@ -480,7 +497,7 @@
     
     // Assignment Helper Logic Setup
     if (CF.setupAssignmentListeners) {
-      CF.setupAssignmentListeners(btnGetAnswers, btnMemorize, btnCopyQuestions, answersDiv);
+      CF.setupAssignmentListeners(btnGetAnswers, btnMemorize, btnCopyQuestions, btnCopyMistakes, answersDiv);
     }
     
     if (CF.setupPeerReviewListeners) {

@@ -52,10 +52,9 @@
 
         quizMap.push({
           id: qNum++,
-            question: rawText.replace(/\n+/g, ' ').trim(),
-            options: mappedOptions
-          });
-        }
+          question: rawText.replace(/\n+/g, ' ').trim(),
+          options: mappedOptions
+        });
       });
       
       if (quizMap.length > 0) return quizMap;
@@ -156,7 +155,7 @@
     return quizMap;
   };
 
-  CF.setupAssignmentListeners = function(btnGetAnswers, btnMemorize, btnCopyQuestions, answersDiv) {
+  CF.setupAssignmentListeners = function(btnGetAnswers, btnMemorize, btnCopyQuestions, btnCopyMistakes, answersDiv) {
     if (btnCopyQuestions) {
       btnCopyQuestions.addEventListener("click", async () => {
         try {
@@ -208,12 +207,6 @@
             return;
           }
 
-          const { groqApiKey } = await chrome.storage.local.get("groqApiKey");
-          if (!groqApiKey) {
-            answersDiv.textContent = "Error: Groq API Key not found.\nPlease enter it in the CourseFlow extension popup (Assignments Tab).";
-            return;
-          }
-          
           const assignmentId = location.pathname.split('/')[4] || 'unknown';
           const storageKey = `mistakes_${assignmentId}`;
           const mistakesData = await chrome.storage.local.get(storageKey);
@@ -226,34 +219,20 @@
 
           answersDiv.textContent = "Asking AI for answers...";
           
-          const prompt = `You are a helpful AI answering a multiple-choice quiz. I will provide the questions and options. Your ONLY job is to return a numbered list of the correct answers, in the exact format:\nQ1: Option 2\nQ2: Option 4\nDo not include any explanations, reasoning, or other text.${mistakePromptStr}\n\nQUIZ:\n${JSON.stringify(quizMap, null, 2)}`;
+          const prompt = `You are a helpful AI answering a quiz. I will provide the questions and options. 
+For multiple-choice questions, return the correct option number (e.g., "Q1: Option 2").
+For text input or short answer questions (where the option is "(Text Input / Short Answer Required)"), return the actual short answer text (e.g., "Q2: The actual short answer text").
+Your ONLY job is to return a numbered list of the correct answers. Do not include any explanations, reasoning, or other text.${mistakePromptStr}\n\nQUIZ:\n${JSON.stringify(quizMap, null, 2)}`;
           
-          const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${groqApiKey}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              model: "llama-3.1-8b-instant",
-              messages: [{ role: "user", content: prompt }],
-              temperature: 0.1
-            })
+          const response = await new Promise((resolve) => {
+            chrome.runtime.sendMessage({ type: "fetch_answers", prompt: prompt }, resolve);
           });
-
-          if (!response.ok) {
-            let errMsg = `API Error: ${response.status}`;
-            try {
-              const errData = await response.json();
-              if (errData.error && errData.error.message) {
-                errMsg += ` - ${errData.error.message}`;
-              }
-            } catch (e) {}
-            throw new Error(errMsg);
+          
+          if (response && response.success) {
+            answersDiv.textContent = response.text;
+          } else {
+            throw new Error(response ? response.error : "Failed to communicate with background script.");
           }
-
-          const data = await response.json();
-          answersDiv.textContent = data.choices[0].message.content;
 
         } catch (error) {
           answersDiv.textContent = `Error getting answers: ${error.message}`;
@@ -349,6 +328,103 @@
            answersDiv.textContent = `Error: ${e.message}`;
         } finally {
           btnMemorize.disabled = false;
+        }
+      });
+    }
+
+    if (btnCopyMistakes) {
+      btnCopyMistakes.addEventListener("click", async () => {
+        btnCopyMistakes.disabled = true;
+        answersDiv.hidden = false;
+        answersDiv.textContent = "Extracting incorrect answers...";
+        
+        try {
+          const wrongQuestions = [];
+          const incorrectIcons = document.querySelectorAll('[data-testid="icon-incorrect"]');
+
+          incorrectIcons.forEach(icon => {
+            let container = icon;
+            while (container && container.tagName !== 'BODY') {
+              if (container.querySelector('.rc-Option')) break;
+              container = container.parentElement;
+            }
+            if (!container || container.tagName === 'BODY') return;
+            
+            let questionBlock = container;
+            let parent = container.parentElement;
+            for (let i = 0; i < 4; i++) {
+              if (!parent || parent.tagName === 'BODY') break;
+              if (parent.innerText.trim().length > container.innerText.trim().length + 15) {
+                questionBlock = parent;
+                break;
+              }
+              parent = parent.parentElement;
+            }
+            
+            const clone = questionBlock.cloneNode(true);
+            clone.querySelectorAll('.rc-Option').forEach(o => o.remove());
+            clone.querySelectorAll('[id$="-grade-feedback"]').forEach(o => o.remove());
+            
+            clone.style.position = 'absolute';
+            clone.style.opacity = '0';
+            clone.style.pointerEvents = 'none';
+            clone.style.left = '-9999px';
+            document.body.appendChild(clone);
+            
+            let rawText = (clone.innerText || clone.textContent).replace(/1 point/gi, '').replace(/0 \/ 1 point/gi, '').trim();
+            document.body.removeChild(clone);
+            
+            const poisonIndex = rawText.indexOf("You are a helpful AI assistant");
+            if (poisonIndex !== -1) {
+                rawText = rawText.substring(0, poisonIndex).trim();
+            }
+            const questionText = rawText.replace(/\n+/g, ' ').trim();
+            
+            if (questionText.length < 5 || /characters used/i.test(questionText) || /honor code/i.test(questionText)) {
+                return;
+            }
+            
+            const cleanQuestionText = questionText.replace(/^(\d+\.\s*Question\s*\d+\s*|\d+\.\s*|Question\s*\d+\s*)/i, '');
+            
+            const selectedOptions = Array.from(container.querySelectorAll('.cds-checkboxAndRadio-checked'));
+            const wrongAnswers = selectedOptions.map(opt => {
+               const label = opt.querySelector('.cds-checkboxAndRadio-labelText');
+               return label ? label.innerText.trim() : "";
+            }).filter(t => t);
+            
+            wrongQuestions.push({
+              question: cleanQuestionText,
+              wrongAnswers: wrongAnswers
+            });
+          });
+          
+          if (wrongQuestions.length === 0) {
+             answersDiv.textContent = "No incorrect answers found to copy.";
+             return;
+          }
+          
+          let clipboardText = "Incorrect Questions/Answers:\n\n";
+          wrongQuestions.forEach(q => {
+            clipboardText += `Q: ${q.question}\n`;
+            q.wrongAnswers.forEach(opt => {
+              clipboardText += `  Incorrect: ${opt}\n`;
+            });
+            clipboardText += "\n";
+          });
+          
+          await navigator.clipboard.writeText(clipboardText.trim());
+          answersDiv.textContent = `Copied ${wrongQuestions.length} incorrect answers to clipboard!`;
+          
+          setTimeout(() => {
+            if (answersDiv.textContent.includes("Copied")) {
+              answersDiv.hidden = true;
+            }
+          }, 4000);
+          
+        } catch (e) {
+           answersDiv.textContent = `Error: ${e.message}`;
+        } finally {
+          btnCopyMistakes.disabled = false;
         }
       });
     }

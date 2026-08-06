@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CourseFlow",
-  "description": "Automates learning on Coursera. Skip videos, mark readings as completed, and advance automatically.",
+  "description": "Semi-automates learning on Coursera. Skip videos, mark readings as completed, and advance semi-automatically.",
   "version": "0.1.0",
   "icons": {
     "16": "icons/icon16.png",
@@ -15,8 +15,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://coursera.org/*",
-        "https://*.coursera.org/*"
+        "https://coursera.org/learn/*",
+        "https://*.coursera.org/learn/*"
       ],
       "js": [
         "modules/video-skipper-core.js",
@@ -32,12 +32,18 @@
       "run_at": "document_idle"
     }
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "permissions": [
     "activeTab",
     "scripting",
     "storage"
   ],
   "host_permissions": [
-    "https://api.groq.com/*"
+    "https://api.groq.com/*",
+    "https://api.anthropic.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.openai.com/*"
   ]
 }

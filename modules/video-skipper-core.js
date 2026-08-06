@@ -10,7 +10,7 @@
   const PLAY_SETTLE_MS = 350;
   const POST_SKIP_MIN_WAIT_MS = 700;
   const POST_SKIP_MAX_WAIT_MS = 4500;
-  const COMPLETION_ACTION_TIMEOUT_MS = 4500;
+  const COMPLETION_ACTION_TIMEOUT_MS = 12000;
   const COMPLETION_ACTION_RETRY_MS = 250;
 
   function wait(ms) {
@@ -268,9 +268,11 @@
         "button[aria-label*='Go to next item' i]",
         "a[aria-label='Go to next item' i]",
         "a[aria-label*='Go to next item' i]",
-        "[data-track-component='nav_button_next']"
+        "[data-track-component='nav_button_next']",
+        "button[data-testid='next-item']",
+        "a[data-testid='next-item']"
       ]) ||
-      findButtonByText((text) => text.includes("go to next item") || text === "next" || text.includes("next item") || text.includes("next module"))
+      findButtonByText((text) => text.startsWith("next") || text.includes("go to next") || text.includes("next item") || text.includes("next module"))
     );
   }
 
@@ -323,6 +325,7 @@
     const isSupplement = window.location.pathname.includes('/supplement/');
     if (isSupplement) {
       window.scrollTo(0, document.body.scrollHeight);
+      timeoutMs = Math.max(timeoutMs, 12000); // Coursera enforces a read timer on some supplements
       await wait(500);
     }
     

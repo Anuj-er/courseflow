@@ -37,7 +37,6 @@ async function getActiveTab() {
 async function updateContextBar() {
   const tab = await getActiveTab();
   if (tab && tab.title) {
-    // Clean up Coursera title (usually ends with " | Coursera")
     let title = tab.title.replace(" | Coursera", "");
     pageContext.textContent = title || "Unknown page";
   } else {
@@ -151,48 +150,151 @@ btnSkip.addEventListener("click", async () => {
 });
 
 // ── Settings Logic ──
+const providerCards = document.querySelectorAll(".provider-card");
+const aiModelSelect = document.getElementById("aiModel");
+const groupCustomModel = document.getElementById("groupCustomModel");
+const customModelInput = document.getElementById("customModelId");
+const groupGroqKey = document.getElementById("groupGroqKey");
+const groupClaudeKey = document.getElementById("groupClaudeKey");
+const groupGeminiKey = document.getElementById("groupGeminiKey");
+const groupOpenaiKey = document.getElementById("groupOpenaiKey");
 const groqApiKeyInput = document.getElementById("groqApiKey");
-const btnSaveGroqKey = document.getElementById("btnSaveGroqKey");
-const groqSaveStatus = document.getElementById("groqSaveStatus");
+const claudeApiKeyInput = document.getElementById("claudeApiKey");
+const geminiApiKeyInput = document.getElementById("geminiApiKey");
+const openaiApiKeyInput = document.getElementById("openaiApiKey");
+const btnSaveSettings = document.getElementById("btnSaveSettings");
+const saveStatus = document.getElementById("saveStatus");
 
-async function loadSettings() {
-  const data = await chrome.storage.local.get(["groqApiKey", "peerReviewScorePref"]);
-  if (data.groqApiKey) {
-    groqApiKeyInput.value = data.groqApiKey;
-  }
+let selectedProvider = "groq";
+
+const MODELS = {
+  groq: [
+    { id: "llama-3.1-8b-instant", name: "LLaMA 3.1 8B Instant" },
+    { id: "llama-3.3-70b-versatile", name: "LLaMA 3.3 70B Versatile" },
+    { id: "mixtral-8x7b-32768", name: "Mixtral 8x7B" }
+  ],
+  claude: [
+    { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4" },
+    { id: "claude-3-5-haiku-latest", name: "Claude 3.5 Haiku" },
+    { id: "claude-3-5-sonnet-latest", name: "Claude 3.5 Sonnet" }
+  ],
+  gemini: [
+    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+    { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" }
+  ],
+  openai: [
+    { id: "gpt-4o-mini", name: "GPT-4o Mini" },
+    { id: "gpt-4o", name: "GPT-4o" },
+    { id: "gpt-4.1-nano", name: "GPT-4.1 Nano" },
+    { id: "gpt-4.1-mini", name: "GPT-4.1 Mini" }
+  ]
+};
+
+const KEY_GROUPS = {
+  groq: "groupGroqKey",
+  claude: "groupClaudeKey",
+  gemini: "groupGeminiKey",
+  openai: "groupOpenaiKey"
+};
+
+function populateModels(provider, activeModelId) {
+  aiModelSelect.innerHTML = "";
+  const models = MODELS[provider];
   
-  const peerReviewScorePref = document.getElementById("peerReviewScorePref");
-  if (peerReviewScorePref && data.peerReviewScorePref) {
-    peerReviewScorePref.value = data.peerReviewScorePref;
-  }
-}
-
-btnSaveGroqKey.addEventListener("click", async () => {
-  const key = groqApiKeyInput.value.trim();
-  await chrome.storage.local.set({ groqApiKey: key });
-  
-  groqSaveStatus.classList.remove("hidden");
-  setTimeout(() => {
-    groqSaveStatus.classList.add("hidden");
-  }, 2000);
-});
-
-const peerReviewScorePref = document.getElementById("peerReviewScorePref");
-if (peerReviewScorePref) {
-  peerReviewScorePref.addEventListener("change", async () => {
-    if (peerReviewScorePref.value === "min") {
-      alert("Very bad of you! Why are you giving less marks? 😠");
-    }
-    await chrome.storage.local.set({ peerReviewScorePref: peerReviewScorePref.value });
-    const peerReviewSaveStatus = document.getElementById("peerReviewSaveStatus");
-    if (peerReviewSaveStatus) {
-      peerReviewSaveStatus.classList.remove("hidden");
-      setTimeout(() => {
-        peerReviewSaveStatus.classList.add("hidden");
-      }, 2000);
-    }
+  models.forEach(model => {
+    const opt = document.createElement("option");
+    opt.value = model.id;
+    opt.textContent = model.name;
+    if (model.id === activeModelId) opt.selected = true;
+    aiModelSelect.appendChild(opt);
   });
 }
+
+function getSelectedModelId() {
+  const custom = customModelInput.value.trim();
+  if (custom) return custom;
+  return aiModelSelect.value;
+}
+
+function setActiveProvider(provider) {
+  selectedProvider = provider;
+  providerCards.forEach(card => {
+    card.classList.toggle("active", card.dataset.provider === provider);
+  });
+  populateModels(provider);
+  updateKeyVisibility(provider);
+}
+
+function updateKeyVisibility(provider) {
+  Object.values(KEY_GROUPS).forEach(id => {
+    document.getElementById(id).classList.add("hidden");
+  });
+  const groupId = KEY_GROUPS[provider];
+  if (groupId) document.getElementById(groupId).classList.remove("hidden");
+}
+
+providerCards.forEach(card => {
+  card.addEventListener("click", () => {
+    setActiveProvider(card.dataset.provider);
+  });
+});
+
+async function loadSettings() {
+  const data = await chrome.storage.local.get([
+    "aiProvider", "aiModel", "groqApiKey", "claudeApiKey", "geminiApiKey", "openaiApiKey"
+  ]);
+  
+  const provider = data.aiProvider || "groq";
+  selectedProvider = provider;
+  
+  providerCards.forEach(card => {
+    card.classList.toggle("active", card.dataset.provider === provider);
+  });
+  
+  if (data.aiModel) {
+    // If the saved model is not in the dropdown list, it must be a custom model
+    const isCustom = !MODELS[data.aiProvider].some(m => m.id === data.aiModel);
+    if (isCustom) {
+      customModelInput.value = data.aiModel;
+    } else {
+      populateModels(provider, data.aiModel);
+    }
+  } else {
+    populateModels(provider);
+  }
+  
+  updateKeyVisibility(provider);
+  
+  if (data.groqApiKey) groqApiKeyInput.value = data.groqApiKey;
+  if (data.claudeApiKey) claudeApiKeyInput.value = data.claudeApiKey;
+  if (data.geminiApiKey) geminiApiKeyInput.value = data.geminiApiKey;
+  if (data.openaiApiKey) openaiApiKeyInput.value = data.openaiApiKey;
+}
+
+btnSaveSettings.addEventListener("click", async () => {
+  const modelId = getSelectedModelId();
+  
+  if (!modelId) {
+    customModelInput.focus();
+    customModelInput.style.borderColor = "#DC2626";
+    setTimeout(() => { customModelInput.style.borderColor = ""; }, 2000);
+    return;
+  }
+  
+  await chrome.storage.local.set({
+    aiProvider: selectedProvider,
+    aiModel: modelId,
+    groqApiKey: groqApiKeyInput.value.trim(),
+    claudeApiKey: claudeApiKeyInput.value.trim(),
+    geminiApiKey: geminiApiKeyInput.value.trim(),
+    openaiApiKey: openaiApiKeyInput.value.trim()
+  });
+  
+  saveStatus.classList.remove("hidden");
+  setTimeout(() => {
+    saveStatus.classList.add("hidden");
+  }, 2000);
+});
 
 // ── Initialization ──
 chrome.storage.onChanged.addListener((changes) => {
@@ -203,7 +305,6 @@ chrome.storage.onChanged.addListener((changes) => {
     updateSessionStats();
   }
   if (changes.autopilotPauseReason) {
-    // Refresh state to show new reason
     getAutopilotState().then(updateUIState);
   }
 });

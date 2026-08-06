@@ -14,12 +14,21 @@
         </div>
         <h1 class="brand-name">CourseFlow</h1>
       </div>
-      <span class="version-tag">v0.1.0</span>
+      <div class="header-actions">
+        <a href="https://github.com/anuj-er/courseflow" target="_blank" title="GitHub Repo" class="header-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+        </a>
+        <a href="https://github.com/anuj-er/courseflow/issues/new" target="_blank" title="Report a Bug" class="header-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M12 18v-6M9 15h6"/></svg>
+        </a>
+      </div>
     </header>
 
     <!-- Context bar (detects page) -->
     <div class="context-bar">
-      <span class="context-icon">📄</span>
+      <span class="context-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      </span>
       <span id="pageContext" class="context-text">Detecting page...</span>
     </div>
 
@@ -31,17 +40,55 @@
         
         <!-- State: IDLE -->
         <div id="stateIdle" class="state-container active">
+          <div class="flow-container">
+            <div class="flow-step">
+              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+            </div>
+            <div class="flow-arrow">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+            </div>
+            <div class="flow-step step-ai">
+              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+            </div>
+            <div class="flow-arrow">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+            </div>
+            <div class="flow-step">
+              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+            </div>
+          </div>
+          <h2 class="idle-title">Ready to Learn?</h2>
+          <p class="idle-subtitle">
+            CourseFlow will semi-automatically skip videos and assist with quizzes using your selected AI model.
+          </p>
           <button id="btnStart" class="btn btn-hero">
             <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             Start Auto-pilot
           </button>
           <div class="manual-action">
-            <button id="btnSkip" class="btn btn-text">Skip &amp; Continue</button>
+            <button id="btnSkip" class="btn btn-text">Skip Video Only</button>
           </div>
         </div>
 
         <!-- State: RUNNING -->
         <div id="stateRunning" class="state-container">
+          <div class="flow-container">
+            <div class="flow-step">
+              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+            </div>
+            <div class="flow-arrow">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+            </div>
+            <div class="flow-step step-ai">
+              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
+            </div>
+            <div class="flow-arrow">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+            </div>
+            <div class="flow-step">
+              <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+            </div>
+          </div>
           <div class="state-indicator">
             <span class="dot dot-running"></span>
             <span class="state-text">Running</span>
@@ -79,7 +126,9 @@
 
         <!-- Session Stats -->
         <div class="session-stats">
-          <span class="stats-icon">✓</span>
+          <span class="stats-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
           <span id="sessionCount">0</span> items completed this session
         </div>
 
@@ -87,20 +136,73 @@
 
       <div id="tabAssignments" class="tab-content">
         <div class="settings-container">
-          <div class="settings-header">
-            <h2>Assignment Helper</h2>
-            <span class="badge badge-beta">Beta</span>
+          <label class="settings-label" style="margin-top:0;">AI Provider</label>
+          <div class="provider-cards" id="providerCards">
+            <button class="provider-card active" data-provider="groq">
+              <img class="provider-icon" src="/icons/groq.svg" alt="Groq">
+              <span>Groq</span>
+            </button>
+            <button class="provider-card" data-provider="claude">
+              <img class="provider-icon" src="/icons/claude.svg" alt="Claude">
+              <span>Claude</span>
+            </button>
+            <button class="provider-card" data-provider="gemini">
+              <img class="provider-icon" src="/icons/gemini.svg" alt="Gemini">
+              <span>Gemini</span>
+            </button>
+            <button class="provider-card" data-provider="openai">
+              <img class="provider-icon" src="/icons/openai.svg" alt="OpenAI">
+              <span>OpenAI</span>
+            </button>
           </div>
-          <p class="settings-desc">Enter your Groq API key to power the auto-solver on quiz attempt pages.</p>
-          
-          <div class="form-group">
-            <label for="groqApiKey">Groq API Key</label>
-            <input type="password" id="groqApiKey" placeholder="gsk_..." />
+
+          <div class="form-group" style="margin-top:10px">
+            <label for="aiModel">Model</label>
+            <select id="aiModel" class="form-select"></select>
           </div>
-          <button id="btnSaveGroqKey" class="btn btn-primary w-100">
-            Save Key
+
+          <div class="form-group" id="groupCustomModel">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+               <label for="customModelId">Custom Model ID</label>
+               <span style="font-size:10px; color:var(--text-muted);">Optional (Overrides dropdown)</span>
+            </div>
+            <input type="text" id="customModelId" placeholder="e.g. llama-4-scout-17b-16e-instruct" class="form-input" />
+          </div>
+
+          <div class="form-group" id="groupGroqKey" style="margin-top:4px">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+              <label for="groqApiKey">API Key</label>
+              <a href="https://console.groq.com/keys" target="_blank" style="font-size:10px; color:var(--primary); text-decoration:none;">Get API key &rarr;</a>
+            </div>
+            <input type="password" id="groqApiKey" placeholder="gsk_..." class="form-input" />
+          </div>
+          <div class="form-group hidden" id="groupClaudeKey" style="margin-top:4px">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+              <label for="claudeApiKey">API Key</label>
+              <a href="https://console.anthropic.com/settings/keys" target="_blank" style="font-size:10px; color:var(--primary); text-decoration:none;">Get API key &rarr;</a>
+            </div>
+            <input type="password" id="claudeApiKey" placeholder="sk-ant-..." class="form-input" />
+          </div>
+          <div class="form-group hidden" id="groupGeminiKey" style="margin-top:4px">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+              <label for="geminiApiKey">API Key</label>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:10px; color:var(--primary); text-decoration:none;">Get API key &rarr;</a>
+            </div>
+            <input type="password" id="geminiApiKey" placeholder="AIzaSy..." class="form-input" />
+          </div>
+          <div class="form-group hidden" id="groupOpenaiKey" style="margin-top:4px">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+              <label for="openaiApiKey">API Key</label>
+              <a href="https://platform.openai.com/api-keys" target="_blank" style="font-size:10px; color:var(--primary); text-decoration:none;">Get API key &rarr;</a>
+            </div>
+            <input type="password" id="openaiApiKey" placeholder="sk-..." class="form-input" />
+          </div>
+
+          <button id="btnSaveSettings" class="btn btn-primary" style="width: 75%; margin: 10px auto 0 auto; display: flex;">
+            <svg style="margin-right:8px;" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Settings
           </button>
-          <div id="groqSaveStatus" class="save-status hidden">Saved!</div>
+          <div id="saveStatus" class="save-status hidden">Saved!</div>
         </div>
       </div>
 
@@ -109,7 +211,7 @@
     <!-- Bottom Tab Bar -->
     <nav class="tab-bar">
       <button class="tab-btn active" data-target="tabControls">
-        Controls <span class="tab-dot"></span>
+        Controls
       </button>
       <button class="tab-btn" data-target="tabAssignments">
         Settings
