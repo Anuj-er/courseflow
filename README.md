@@ -1,30 +1,65 @@
 # CourseFlow
 
-![CourseFlow Logo](icons/icon128.png)
+CourseFlow is an intelligent, automated companion for Coursera. It helps you seamlessly navigate through video lectures, automatically skip repetitive elements, and offers an AI-powered assistant for assignments, transforming your learning experience into a frictionless flow.
 
-CourseFlow is a powerful Chrome extension that automates your learning experience on Coursera. It seamlessly skips in-video prompts, automatically marks readings and supplements as completed, and advances you to the next item in the course—letting you focus entirely on the material without unnecessary clicks.
+## 🚀 Features
 
-## Features
-- **Auto-pilot Mode**: Automatically skips video interruptions, clicks "Next" when videos finish, and marks readings as completed.
-- **Assignment Helper (Beta)**: Get AI-powered help on difficult multiple-choice quizzes using the Groq API.
-- **Mistake Memory (Beta)**: Memorizes your incorrect answers on assignments and tells the AI to avoid them on future attempts.
-- **Privacy-First**: Runs locally in your browser. Automatically blocks intrusive analytics trackers on Coursera.
+- **Auto-Pilot Navigation**: Automatically clicks "Next" when a video finishes. No more manual clicking between lectures.
+- **Video Skipper**: Forces videos to complete instantly across Coursera's complex iframe architecture, saving hours of manual watching.
+- **Smart Assignment Helper (Beta)**:
+  - Connects to the Groq AI API for instant multiple-choice quiz assistance.
+  - Features a **"Memorize Mistakes"** system: If you get answers wrong, the AI learns from your mistakes and guarantees it won't pick them on your next attempt.
+- **Cross-Frame Architecture**: Bypasses Coursera's deeply nested iframes with a lightweight cross-document messaging system.
 
-## Installation
-1. Download or clone this repository.
-2. Open Google Chrome and navigate to `chrome://extensions/`.
-3. Enable **Developer mode** in the top right corner.
-4. Click **Load unpacked** and select the directory containing this extension.
-5. Pin CourseFlow to your browser toolbar for quick access!
+## 🛠️ Architecture
 
-## Usage
-1. Navigate to any Coursera course page.
-2. Open the CourseFlow popup and click **Start Auto-pilot**.
-3. Sit back and watch the course!
-4. *(Optional)* For the Assignment Helper, navigate to the **Assignments** tab in the popup and enter a valid [Groq API Key](https://console.groq.com/keys).
+CourseFlow's codebase is heavily modularized to guarantee stability, security, and maintainability.
 
-## Contributing
-We welcome contributions! Please check out our [Issue Templates](.github/ISSUE_TEMPLATE/) and [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md) before submitting.
+```mermaid
+graph TD
+    A[Coursera Page] -->|Injects| B(content.js Orchestrator)
+    B --> C(modules/ui.js)
+    B --> D(modules/autopilot.js)
+    B --> E(modules/assignment.js)
+    
+    C -->|Creates| F[Shadow DOM Interface]
+    D -->|Calls| G[video-skipper-core]
+    G <-->|postMessage| H(modules/messaging.js)
+    
+    E -->|Reads via DOM| I[Extract Quiz Data]
+    I -->|API Call| J[Groq API (Llama 3)]
+    
+    K[Popup Interface] -->|Updates Settings| L[(chrome.storage.local)]
+    E -.->|Reads Key| L
+```
 
-## License
-MIT License
+### Module Breakdown:
+1. **`content.js`**: The orchestrator. Monitors URL changes and page loads to inject controls.
+2. **`modules/utils.js`**: Core helper functions (domain checks, wait functions).
+3. **`modules/messaging.js`**: A robust `postMessage` router that bypasses same-origin policy restrictions when penetrating Coursera's LTI tool iframes.
+4. **`modules/autopilot.js`**: The main execution loop for Auto-pilot and video skipping.
+5. **`modules/assignment.js`**: Quiz DOM extraction, Mistake Memorization, and LLM inference logic.
+6. **`modules/ui.js`**: Creates a secure, isolated Shadow DOM to inject the floating UI elements without conflicting with Coursera's native CSS.
+
+## 🔒 Security Posture
+
+CourseFlow was built with modern extension security standards in mind:
+- **No `innerHTML` usage**: All dynamic data relies on `textContent` and `innerText` to completely eliminate Cross-Site Scripting (XSS) vulnerabilities.
+- **Local Storage Isolation**: Your Groq API keys are stored securely in `chrome.storage.local` within the extension sandbox, invisible to the host webpage.
+- **Strict Message Passing**: The cross-frame messaging architecture strictly validates `event.source === window.parent` to prevent malicious iframe hijacking.
+
+## 💻 How to Use
+
+1. **Install the Extension**: Load the unpacked folder via `chrome://extensions/`.
+2. **Set up AI (Optional)**: Click the extension icon in your Chrome toolbar, go to the **Assignments** tab, and enter your Groq API Key.
+3. **Start Auto-Pilot**: When on a Coursera course page, you will see a small floating UI at the bottom right. Click **Start Auto-Pilot** to automatically play and skip through videos.
+4. **Assignment Helper**: When you land on a quiz attempt page, two new buttons will appear in the floating UI:
+   - **Get AI Answers**: Scrapes the quiz, asks the AI, and displays the answers in a floating popup.
+   - **Memorize Mistakes**: If you fail a quiz, click this on the feedback page! It will store the incorrect options so the AI never repeats them on your retry.
+
+## 🔮 Upcoming Features
+
+We are actively expanding CourseFlow to become the ultimate learning copilot. The roadmap includes:
+- **Automatic Peer Review System**: AI-driven analysis of peer-graded assignments to help you provide constructive, high-quality reviews automatically.
+- **Multiple AI Model Support**: Soon, you won't be limited to just Groq. We are adding native support for **Google Gemini** and **Anthropic Claude**.
+- **Model Selection UI**: A new settings panel to easily toggle between models based on your preference for speed (Groq) or complex reasoning (Claude/Gemini).
