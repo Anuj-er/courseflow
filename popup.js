@@ -86,7 +86,15 @@ async function triggerAutopilot() {
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },
-      files: ["video-skipper-core.js", "content.js"]
+      files: [
+        "modules/video-skipper-core.js",
+        "modules/utils.js",
+        "modules/messaging.js",
+        "modules/autopilot.js",
+        "modules/assignment.js",
+        "modules/ui.js",
+        "content.js"
+      ]
     });
     await chrome.tabs.sendMessage(tab.id, { type: "autopilot-trigger" });
   } catch (error) {
@@ -128,9 +136,9 @@ btnSkip.addEventListener("click", async () => {
   btnSkip.textContent = "Processing...";
   
   try {
-    await chrome.scripting.executeScript({
+    const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id, allFrames: true },
-      files: ["video-skipper-core.js", "skip-video.js"]
+      files: ["modules/video-skipper-core.js", "modules/skip-video.js"]
     });
   } catch (e) {
     console.error(e);

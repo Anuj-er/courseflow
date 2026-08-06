@@ -55,7 +55,7 @@
 
       quizMap.push({
         id: qNum++,
-        question: rawText.replace(/\\n+/g, ' ').trim(),
+        question: rawText.replace(/\n+/g, ' ').trim(),
         options: mappedOptions
       });
     });
@@ -79,7 +79,7 @@
 
           const { groqApiKey } = await chrome.storage.local.get("groqApiKey");
           if (!groqApiKey) {
-            answersDiv.textContent = "Error: Groq API Key not found.\\nPlease enter it in the CourseFlow extension popup (Assignments Tab).";
+            answersDiv.textContent = "Error: Groq API Key not found.\nPlease enter it in the CourseFlow extension popup (Assignments Tab).";
             return;
           }
           
@@ -90,12 +90,12 @@
           
           let mistakePromptStr = "";
           if (mistakes.length > 0) {
-             mistakePromptStr = `\\n\\nWARNING: The following options are KNOWN TO BE INCORRECT based on a previous attempt. DO NOT select these under any circumstances:\\n${JSON.stringify(mistakes, null, 2)}\\n`;
+             mistakePromptStr = `\n\nWARNING: The following options are KNOWN TO BE INCORRECT based on a previous attempt. DO NOT select these under any circumstances:\n${JSON.stringify(mistakes, null, 2)}\n`;
           }
 
           answersDiv.textContent = "Asking AI for answers...";
           
-          const prompt = `You are a helpful AI answering a multiple-choice quiz. I will provide the questions and options. Your ONLY job is to return a numbered list of the correct answers, in the exact format:\\nQ1: Option 2\\nQ2: Option 4\\nDo not include any explanations, reasoning, or other text.${mistakePromptStr}\\n\\nQUIZ:\\n${JSON.stringify(quizMap, null, 2)}`;
+          const prompt = `You are a helpful AI answering a multiple-choice quiz. I will provide the questions and options. Your ONLY job is to return a numbered list of the correct answers, in the exact format:\nQ1: Option 2\nQ2: Option 4\nDo not include any explanations, reasoning, or other text.${mistakePromptStr}\n\nQUIZ:\n${JSON.stringify(quizMap, null, 2)}`;
           
           const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
@@ -168,12 +168,12 @@
             clone.querySelectorAll('.rc-Option').forEach(o => o.remove());
             clone.querySelectorAll('[id$="-grade-feedback"]').forEach(o => o.remove());
             
-            let rawText = clone.innerText.replace(/1 point/g, '').replace(/0 \\/ 1 point/g, '').trim();
+            let rawText = clone.innerText.replace(/1 point/g, '').replace(/0 \/ 1 point/g, '').trim();
             const poisonIndex = rawText.indexOf("You are a helpful AI assistant");
             if (poisonIndex !== -1) {
                 rawText = rawText.substring(0, poisonIndex).trim();
             }
-            const questionText = rawText.replace(/\\n+/g, ' ').trim();
+            const questionText = rawText.replace(/\n+/g, ' ').trim();
             
             const selectedOptions = Array.from(container.querySelectorAll('.cds-checkboxAndRadio-checked'));
             const wrongAnswers = selectedOptions.map(opt => {

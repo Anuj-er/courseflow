@@ -19,7 +19,7 @@
         "https://*.coursera.org/*"
       ],
       "js": [
-        "video-skipper-core.js",
+        "modules/video-skipper-core.js",
         "modules/utils.js",
         "modules/messaging.js",
         "modules/autopilot.js",
