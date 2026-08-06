@@ -14,9 +14,13 @@
 
   const DETECTION_TIMEOUT_MS = 30000;
 
-  // Poll for URL changes
+  // Poll for URL changes and ensure control is present
   let lastKnownUrl = location.href;
   setInterval(async () => {
+    if (!document.getElementById(CF.CONTROL_ID) && CF.shouldShowControl()) {
+      CF.installControl();
+    }
+
     if (location.href !== lastKnownUrl) {
       lastKnownUrl = location.href;
       

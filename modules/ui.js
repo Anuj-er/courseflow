@@ -43,9 +43,13 @@
       if (assignmentUI) {
         assignmentUI.hidden = false;
         if (btnGetAnswers) btnGetAnswers.hidden = !isAttemptPage;
+        const btnCopyQuestions = host.shadowRoot.querySelector("#btnCopyQuestions");
+        if (btnCopyQuestions) btnCopyQuestions.hidden = !isAttemptPage;
         if (btnMemorize) btnMemorize.hidden = !isFeedbackPage;
         const btnGradePeer = host.shadowRoot.querySelector("#btnGradePeer");
         if (btnGradePeer) btnGradePeer.hidden = !isPeerReviewPage;
+        const scoreToggleWrapper = host.shadowRoot.querySelector("#scoreToggleWrapper");
+        if (scoreToggleWrapper) scoreToggleWrapper.hidden = !isPeerReviewPage;
       }
       return;
     }
@@ -277,7 +281,7 @@
 
         .assignment-helper-ui[hidden] { display: none; }
 
-        .btn-get-answers, .btn-memorize, .btn-grade-peer {
+        .btn-get-answers, .btn-memorize, .btn-grade-peer, .btn-copy, .btn-score-toggle {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -295,28 +299,92 @@
         .btn-get-answers { color: #10B981; }
         .btn-memorize { color: #8B5CF6; }
         .btn-grade-peer { color: #F59E0B; }
+        .btn-copy { color: #6B7280; }
+
+        /* Toggle Switch CSS */
+        .score-toggle-wrapper {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          border-radius: 8px;
+          border: 1px solid rgba(15, 23, 42, 0.1);
+          background: #ffffff;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+          pointer-events: auto;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .score-toggle-wrapper:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+          background: #FFFBEB;
+        }
+        .score-toggle-wrapper:active {
+          transform: scale(0.92);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        .switch {
+          position: relative;
+          display: inline-block;
+          width: 28px;
+          height: 16px;
+        }
+        .switch input { 
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        .slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background-color: #F59E0B; /* Same color, doesn't change */
+          transition: .3s;
+          border-radius: 16px;
+        }
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 12px;
+          width: 12px;
+          left: 2px;
+          bottom: 2px;
+          background-color: white;
+          transition: .3s;
+          border-radius: 50%;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        input:checked + .slider {
+          background-color: #F59E0B; /* Stays exactly the same */
+        }
+        input:checked + .slider:before {
+          transform: translateX(12px);
+        }
 
         .btn-get-answers:hover { background: #ECFDF5; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
         .btn-memorize:hover { background: #F5F3FF; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
         .btn-grade-peer:hover { background: #FFFBEB; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
+        .btn-copy:hover { background: #F3F4F6; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
 
-        .btn-get-answers:active, .btn-memorize:active, .btn-grade-peer:active {
+        .btn-get-answers:active, .btn-memorize:active, .btn-grade-peer:active, .btn-copy:active {
           transform: scale(0.92);
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         
-        .btn-get-answers svg, .btn-memorize svg, .btn-grade-peer svg {
+        .btn-get-answers svg, .btn-memorize svg, .btn-grade-peer svg, .btn-copy svg {
           width: 28px;
           height: 28px;
           fill: currentColor;
         }
 
-        .btn-get-answers:disabled, .btn-memorize:disabled, .btn-grade-peer:disabled {
+        .btn-get-answers:disabled, .btn-memorize:disabled, .btn-grade-peer:disabled, .btn-copy:disabled {
           opacity: 0.7;
           cursor: wait;
           animation: btnPulse 1s infinite ease-in-out;
         }
-        .btn-get-answers[hidden], .btn-memorize[hidden], .btn-grade-peer[hidden] { display: none; }
+        .btn-get-answers[hidden], .btn-memorize[hidden], .btn-grade-peer[hidden], .btn-copy[hidden], .score-toggle-wrapper[hidden] { display: none; }
 
         .answers-div {
           background: #ffffff;
@@ -352,13 +420,22 @@
         </button>
         
         <div class="assignment-helper-ui" hidden>
+          <button id="btnCopyQuestions" class="btn-copy" hidden title="Copy Questions to Clipboard">
+            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+          </button>
           <button id="btnGetAnswers" class="btn-get-answers" hidden title="Get AI Answers">
             <svg viewBox="0 0 24 24"><path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z"/></svg>
           </button>
           <button id="btnMemorize" class="btn-memorize" hidden title="Memorize Mistakes">
             <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
           </button>
-          <button id="btnGradePeer" class="btn-grade-peer" hidden title="Grade Peer (Max Score)">
+          <div id="scoreToggleWrapper" class="score-toggle-wrapper" hidden title="Toggle Max/Min Score">
+            <label class="switch">
+              <input type="checkbox" id="scoreToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <button id="btnGradePeer" class="btn-grade-peer" hidden title="Grade Peer">
             <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
           </button>
           <div id="answersDiv" class="answers-div" hidden></div>
@@ -395,19 +472,33 @@
     
     const btnMemorize = shadow.querySelector("#btnMemorize");
     const btnGetAnswers = shadow.querySelector("#btnGetAnswers");
+    const btnCopyQuestions = shadow.querySelector("#btnCopyQuestions");
     const answersDiv = shadow.querySelector("#answersDiv");
     const btnGradePeer = shadow.querySelector("#btnGradePeer");
+    const scoreToggleWrapper = shadow.querySelector("#scoreToggleWrapper");
+    const scoreToggle = shadow.querySelector("#scoreToggle");
     
     // Assignment Helper Logic Setup
     if (CF.setupAssignmentListeners) {
-      CF.setupAssignmentListeners(btnGetAnswers, btnMemorize, answersDiv);
+      CF.setupAssignmentListeners(btnGetAnswers, btnMemorize, btnCopyQuestions, answersDiv);
     }
     
     if (CF.setupPeerReviewListeners) {
-      CF.setupPeerReviewListeners(btnGradePeer, statusEl);
+      CF.setupPeerReviewListeners(btnGradePeer, scoreToggle, scoreToggleWrapper, statusEl);
     }
 
     // Ensure the banner is updated immediately upon installation
     CF.getAutopilotState().then(CF.updateAutopilotBanner);
+
+    // Watch for URL changes (Single Page App navigations)
+    if (!CF.urlWatcherInterval) {
+      let lastUrl = location.href;
+      CF.urlWatcherInterval = setInterval(() => {
+        if (location.href !== lastUrl) {
+          lastUrl = location.href;
+          CF.getAutopilotState().then(CF.updateAutopilotBanner);
+        }
+      }, 1000);
+    }
   };
 })();

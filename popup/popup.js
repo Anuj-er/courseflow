@@ -156,9 +156,14 @@ const btnSaveGroqKey = document.getElementById("btnSaveGroqKey");
 const groqSaveStatus = document.getElementById("groqSaveStatus");
 
 async function loadSettings() {
-  const data = await chrome.storage.local.get("groqApiKey");
+  const data = await chrome.storage.local.get(["groqApiKey", "peerReviewScorePref"]);
   if (data.groqApiKey) {
     groqApiKeyInput.value = data.groqApiKey;
+  }
+  
+  const peerReviewScorePref = document.getElementById("peerReviewScorePref");
+  if (peerReviewScorePref && data.peerReviewScorePref) {
+    peerReviewScorePref.value = data.peerReviewScorePref;
   }
 }
 
@@ -171,6 +176,23 @@ btnSaveGroqKey.addEventListener("click", async () => {
     groqSaveStatus.classList.add("hidden");
   }, 2000);
 });
+
+const peerReviewScorePref = document.getElementById("peerReviewScorePref");
+if (peerReviewScorePref) {
+  peerReviewScorePref.addEventListener("change", async () => {
+    if (peerReviewScorePref.value === "min") {
+      alert("Very bad of you! Why are you giving less marks? 😠");
+    }
+    await chrome.storage.local.set({ peerReviewScorePref: peerReviewScorePref.value });
+    const peerReviewSaveStatus = document.getElementById("peerReviewSaveStatus");
+    if (peerReviewSaveStatus) {
+      peerReviewSaveStatus.classList.remove("hidden");
+      setTimeout(() => {
+        peerReviewSaveStatus.classList.add("hidden");
+      }, 2000);
+    }
+  });
+}
 
 // ── Initialization ──
 chrome.storage.onChanged.addListener((changes) => {

@@ -4,27 +4,102 @@
   const CF = globalThis.__CourseFlow = globalThis.__CourseFlow || {};
 
   CF.extractQuizMap = function() {
-    const options = Array.from(document.querySelectorAll('.rc-Option'));
-    if (options.length === 0) return [];
+    const quizMap = [];
+    let qNum = 1;
+
+    // First try the standard Coursera question block class
+    const formParts = Array.from(document.querySelectorAll('.rc-FormPartsQuestion'));
+    if (formParts.length > 0) {
+      formParts.forEach((block) => {
+        const clone = block.cloneNode(true);
+        const optionsNodes = Array.from(clone.querySelectorAll('.rc-Option'));
+        const hasTextInput = clone.querySelector('input[type="text"], input[type="number"], textarea') !== null;
+        
+        const mappedOptions = optionsNodes.map(o => o.innerText.trim());
+        if (mappedOptions.length === 0 && hasTextInput) {
+          mappedOptions.push("(Text Input / Short Answer Required)");
+        }
+        
+        clone.querySelectorAll('.rc-Option, input, textarea, button').forEach(o => o.remove());
+        
+        // Temporarily append to DOM to get accurate innerText (preserves spaces and ignores hidden elements)
+        clone.style.position = 'absolute';
+        clone.style.opacity = '0';
+        clone.style.pointerEvents = 'none';
+        clone.style.left = '-9999px';
+        document.body.appendChild(clone);
+        
+        let rawText = clone.innerText || clone.textContent;
+        document.body.removeChild(clone);
+        
+        rawText = rawText
+            .replace(/1 point/gi, '')
+            .replace(/Mark as complete/gi, '')
+            .trim();
+            
+        const poisonIndex = rawText.indexOf("You are a helpful AI assistant");
+        if (poisonIndex !== -1) {
+            rawText = rawText.substring(0, poisonIndex).trim();
+        }
+
+        // Filter out bogus inputs like character counters or honor code boxes
+        if (rawText.length < 5 || /characters used/i.test(rawText) || /honor code/i.test(rawText)) {
+            return;
+        }
+
+        // Clean up redundant Coursera numbering (e.g. "1. Question 1 ")
+        rawText = rawText.replace(/^(\d+\.\s*Question\s*\d+\s*|\d+\.\s*|Question\s*\d+\s*)/i, '');
+
+        quizMap.push({
+          id: qNum++,
+            question: rawText.replace(/\n+/g, ' ').trim(),
+            options: mappedOptions
+          });
+        }
+      });
+      
+      if (quizMap.length > 0) return quizMap;
+    }
+
+    // Fallback heuristic: group by common ancestors
+    const inputs = Array.from(document.querySelectorAll('.rc-Option, input[type="text"], input[type="number"], textarea'));
+    if (inputs.length === 0) return [];
 
     const questionGroups = new Map();
-    options.forEach(opt => {
+    inputs.forEach(opt => {
       let parent = opt.parentElement;
+      let foundContainer = false;
+      
       while (parent && parent.tagName !== 'BODY') {
-        if (parent.querySelectorAll('.rc-Option').length >= 2) {
-          if (!questionGroups.has(parent)) {
-            questionGroups.set(parent, []);
+        if (opt.classList.contains('rc-Option')) {
+          if (parent.querySelectorAll('.rc-Option').length >= 2) {
+            foundContainer = true;
+            break;
           }
-          questionGroups.get(parent).push(opt);
-          break;
+        } else {
+          // Heuristic for text inputs: go up 3 levels
+          let levelsUp = 0;
+          let p = opt;
+          while(p && levelsUp < 3) {
+             p = p.parentElement;
+             levelsUp++;
+          }
+          if (parent === p) {
+            foundContainer = true;
+            break;
+          }
         }
         parent = parent.parentElement;
       }
+
+      if (parent && parent.tagName !== 'BODY') {
+        if (!questionGroups.has(parent)) {
+          questionGroups.set(parent, []);
+        }
+        questionGroups.get(parent).push(opt);
+      }
     });
 
-    const quizMap = [];
-    let qNum = 1;
-    
     questionGroups.forEach((opts, container) => {
       let questionBlock = container;
       let parent = container.parentElement;
@@ -39,19 +114,37 @@
       }
 
       const clone = questionBlock.cloneNode(true);
-      clone.querySelectorAll('.rc-Option').forEach(o => o.remove());
+      clone.querySelectorAll('.rc-Option, input, textarea, button').forEach(o => o.remove());
       
-      let rawText = clone.innerText
-          .replace(/1 point/g, '')
-          .replace(/Mark as complete/g, '')
+      // Temporarily append to DOM to get accurate innerText
+      clone.style.position = 'absolute';
+      clone.style.opacity = '0';
+      clone.style.pointerEvents = 'none';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
+      
+      let rawText = (clone.innerText || clone.textContent)
+          .replace(/1 point/gi, '')
+          .replace(/Mark as complete/gi, '')
           .trim();
+          
+      document.body.removeChild(clone);
           
       const poisonIndex = rawText.indexOf("You are a helpful AI assistant");
       if (poisonIndex !== -1) {
           rawText = rawText.substring(0, poisonIndex).trim();
       }
 
-      const mappedOptions = opts.map(o => o.innerText.trim());
+      // Filter out bogus inputs like character counters or honor code boxes
+      if (rawText.length < 5 || /characters used/i.test(rawText) || /honor code/i.test(rawText)) {
+          return;
+      }
+
+      // Clean up redundant Coursera numbering (e.g. "1. Question 1 ")
+      rawText = rawText.replace(/^(\d+\.\s*Question\s*\d+\s*|\d+\.\s*|Question\s*\d+\s*)/i, '');
+
+      const isTextQuestion = !opts[0].classList.contains('rc-Option');
+      const mappedOptions = isTextQuestion ? ["(Text Input / Short Answer Required)"] : opts.map(o => o.innerText.trim());
 
       quizMap.push({
         id: qNum++,
@@ -63,7 +156,45 @@
     return quizMap;
   };
 
-  CF.setupAssignmentListeners = function(btnGetAnswers, btnMemorize, answersDiv) {
+  CF.setupAssignmentListeners = function(btnGetAnswers, btnMemorize, btnCopyQuestions, answersDiv) {
+    if (btnCopyQuestions) {
+      btnCopyQuestions.addEventListener("click", async () => {
+        try {
+          btnCopyQuestions.disabled = true;
+          answersDiv.hidden = false;
+          answersDiv.textContent = "Extracting questions...";
+
+          const quizMap = CF.extractQuizMap();
+          if (quizMap.length === 0) {
+            answersDiv.textContent = "Could not find any multiple-choice questions on this page.";
+            return;
+          }
+
+          let clipboardText = "Quiz Questions:\n\n";
+          quizMap.forEach(q => {
+            clipboardText += `Q${q.id}: ${q.question}\n`;
+            q.options.forEach((opt, idx) => {
+              clipboardText += `  ${idx + 1}. ${opt}\n`;
+            });
+            clipboardText += "\n";
+          });
+
+          await navigator.clipboard.writeText(clipboardText.trim());
+          answersDiv.textContent = `Copied ${quizMap.length} questions to clipboard!`;
+          
+          setTimeout(() => {
+            if (answersDiv.textContent.includes("Copied")) {
+              answersDiv.hidden = true;
+            }
+          }, 4000);
+        } catch (error) {
+          answersDiv.textContent = `Failed to copy: ${error.message}`;
+        } finally {
+          btnCopyQuestions.disabled = false;
+        }
+      });
+    }
+
     if (btnGetAnswers) {
       btnGetAnswers.addEventListener("click", async () => {
         btnGetAnswers.disabled = true;
@@ -168,12 +299,27 @@
             clone.querySelectorAll('.rc-Option').forEach(o => o.remove());
             clone.querySelectorAll('[id$="-grade-feedback"]').forEach(o => o.remove());
             
-            let rawText = clone.innerText.replace(/1 point/g, '').replace(/0 \/ 1 point/g, '').trim();
+            clone.style.position = 'absolute';
+            clone.style.opacity = '0';
+            clone.style.pointerEvents = 'none';
+            clone.style.left = '-9999px';
+            document.body.appendChild(clone);
+            
+            let rawText = (clone.innerText || clone.textContent).replace(/1 point/gi, '').replace(/0 \/ 1 point/gi, '').trim();
+            document.body.removeChild(clone);
+            
             const poisonIndex = rawText.indexOf("You are a helpful AI assistant");
             if (poisonIndex !== -1) {
                 rawText = rawText.substring(0, poisonIndex).trim();
             }
             const questionText = rawText.replace(/\n+/g, ' ').trim();
+            
+            if (questionText.length < 5 || /characters used/i.test(questionText) || /honor code/i.test(questionText)) {
+                return;
+            }
+            
+            // Clean up redundant Coursera numbering
+            const cleanQuestionText = questionText.replace(/^(\d+\.\s*Question\s*\d+\s*|\d+\.\s*|Question\s*\d+\s*)/i, '');
             
             const selectedOptions = Array.from(container.querySelectorAll('.cds-checkboxAndRadio-checked'));
             const wrongAnswers = selectedOptions.map(opt => {
@@ -182,7 +328,7 @@
             }).filter(t => t);
             
             wrongQuestions.push({
-              question: questionText,
+              question: cleanQuestionText,
               wrongAnswers: wrongAnswers
             });
           });
