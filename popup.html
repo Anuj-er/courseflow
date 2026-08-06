@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CourseFlow</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <header class="header">
+      <div class="logo-container">
+        <div class="logo-wrapper">
+          <img src="icons/icon48.png" alt="CourseFlow Logo" class="logo">
+        </div>
+        <h1 class="brand-name">CourseFlow</h1>
+      </div>
+      <span class="version-tag">v0.1.0</span>
+    </header>
+
+    <!-- Context bar (detects page) -->
+    <div class="context-bar">
+      <span class="context-icon">📄</span>
+      <span id="pageContext" class="context-text">Detecting page...</span>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="popup-content">
+
+      <!-- TAB: CONTROLS -->
+      <div id="tabControls" class="tab-content active">
+        
+        <!-- State: IDLE -->
+        <div id="stateIdle" class="state-container active">
+          <button id="btnStart" class="btn btn-hero">
+            <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Start Auto-pilot
+          </button>
+          <div class="manual-action">
+            <button id="btnSkip" class="btn btn-text">Skip &amp; Continue</button>
+          </div>
+        </div>
+
+        <!-- State: RUNNING -->
+        <div id="stateRunning" class="state-container">
+          <div class="state-indicator">
+            <span class="dot dot-running"></span>
+            <span class="state-text">Running</span>
+          </div>
+          <div class="btn-group-split">
+            <button id="btnPause" class="btn btn-primary">
+              <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+              Pause
+            </button>
+            <button id="btnStopRun" class="btn btn-danger-outline">
+              <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+              Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- State: PAUSED -->
+        <div id="statePaused" class="state-container">
+          <div class="state-indicator">
+            <span class="dot dot-paused"></span>
+            <span class="state-text">Paused</span>
+          </div>
+          <p id="pauseReason" class="pause-reason">Waiting for user input.</p>
+          <div class="btn-group-split">
+            <button id="btnResume" class="btn btn-primary">
+              <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              Continue
+            </button>
+            <button id="btnStopPause" class="btn btn-danger-outline">
+              <svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+              Stop
+            </button>
+          </div>
+        </div>
+
+        <!-- Session Stats -->
+        <div class="session-stats">
+          <span class="stats-icon">✓</span>
+          <span id="sessionCount">0</span> items completed this session
+        </div>
+
+      </div>
+
+      <div id="tabAssignments" class="tab-content">
+        <div class="settings-container">
+          <div class="settings-header">
+            <h2>Assignment Helper</h2>
+            <span class="badge badge-beta">Beta</span>
+          </div>
+          <p class="settings-desc">Enter your Groq API key to power the auto-solver on quiz attempt pages.</p>
+          
+          <div class="form-group">
+            <label for="groqApiKey">Groq API Key</label>
+            <input type="password" id="groqApiKey" placeholder="gsk_..." />
+          </div>
+          <button id="btnSaveGroqKey" class="btn btn-primary w-100">
+            Save Key
+          </button>
+          <div id="groqSaveStatus" class="save-status hidden">Saved!</div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Bottom Tab Bar -->
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-target="tabControls">
+        Controls <span class="tab-dot"></span>
+      </button>
+      <button class="tab-btn" data-target="tabAssignments">
+        Assignments
+      </button>
+    </nav>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
