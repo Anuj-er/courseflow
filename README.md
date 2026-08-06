@@ -1,20 +1,44 @@
+<div align="center">
+  <img src="banner.png" alt="CourseFlow Banner" width="100%">
+  <br />
+  <br />
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
+  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5" />
+  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3" />
+  <img src="https://img.shields.io/badge/Manifest_V3-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension V3" />
+</div>
+
+<br />
+
 # CourseFlow
 
-CourseFlow is an intelligent, semi-automated companion for Coursera. It helps you seamlessly navigate through video lectures, semi-automatically skip repetitive elements, and offers an AI-powered assistant for assignments, transforming your learning experience into a frictionless flow.
+**CourseFlow** is a premium, intelligent, and highly secure Chrome Browser Extension designed to drastically speed up and semi-automate the Coursera learning experience. 
 
-## 🚀 Features
+It tackles the most tedious aspects of online learning by automatically fast-forwarding and skipping video lectures across deeply nested iframes, and provides a powerful, multi-provider AI assistant to help you solve quizzes and assignments instantly.
 
-- **Auto-Pilot Navigation**: Automatically clicks "Next" when a video finishes. No more manual clicking between lectures.
-- **Video Skipper**: Forces videos to complete instantly across Coursera's complex iframe architecture, saving hours of manual watching.
-- **Smart Assignment Helper**:
-  - Connects to your choice of AI models (OpenAI, Anthropic Claude, Google Gemini, or Groq) for instant quiz assistance.
-  - Features a **"Memorize Mistakes"** system: If you get answers wrong, the AI learns from your mistakes and guarantees it won't pick them on your next attempt.
-  - Supports entering Custom Model IDs to access the latest beta models on any platform.
-- **Cross-Frame Architecture**: Bypasses Coursera's deeply nested iframes with a lightweight cross-document messaging system.
+---
 
-## 🛠️ Architecture
+## 🚀 What Exactly Does CourseFlow Provide?
 
-CourseFlow's codebase is heavily modularized to guarantee stability, security, and maintainability.
+CourseFlow transforms your learning experience into a frictionless flow through two primary capabilities:
+
+### 1. Video Auto-Pilot & Skipper
+Coursera often requires users to manually watch videos and click "Next" to progress. Coursera's architecture also hides these videos inside complex, deeply nested iframes, making typical automation scripts fail. 
+* CourseFlow automatically detects HTML5 videos, instantly **seeks them to the very end** (saving hours of watching).
+* It automatically finds and clicks the "Mark as Completed" or "Next" buttons to advance you to the next module seamlessly.
+* You can leave it running in "Auto-Pilot" mode, and it will effortlessly chew through your video backlog.
+
+### 2. Smart AI Quiz Assistant
+When you reach a quiz or assignment, CourseFlow acts as your personal tutor.
+* **Auto-Extraction:** The extension automatically extracts multiple-choice questions, short-answer prompts, and options from the page.
+* **Bring Your Own Key (BYOK):** Send the quiz to your preferred AI model! We support **Groq, Anthropic (Claude), Google (Gemini), and OpenAI (ChatGPT)**. 
+* **"Memorize Mistakes" System:** If you fail a quiz, click the "Memorize Mistakes" button on the feedback page. The extension scans the page, extracts exactly which options you got wrong, and saves them locally. On your next attempt, it feeds those known incorrect answers to the AI, guaranteeing it **never makes the same mistake twice**.
+
+---
+
+## 🛠️ Architecture & Tech Stack
+
+CourseFlow is built using **Vanilla JavaScript, HTML, and CSS**, strictly adhering to the latest **Manifest V3** standards. It requires no heavy frameworks (like React or Vue), making it blazingly fast and lightweight.
 
 ```mermaid
 graph TD
@@ -34,28 +58,48 @@ graph TD
     I -.->|Reads Keys & Models| L
 ```
 
-### Module Breakdown:
-1. **`content.js`**: The orchestrator. Monitors URL changes and page loads to inject controls.
-2. **`modules/utils.js`**: Core helper functions (domain checks, wait functions).
-3. **`modules/messaging.js`**: A robust `postMessage` router that bypasses same-origin policy restrictions when penetrating Coursera's LTI tool iframes.
-4. **`modules/autopilot.js`**: The main execution loop for Auto-pilot and video skipping.
-5. **`modules/assignment.js`**: Quiz DOM extraction and Mistake Memorization.
-6. **`modules/ui.js`**: Creates a secure, isolated Shadow DOM to inject the floating UI elements without conflicting with Coursera's native CSS.
-7. **`background.js`**: Acts as a secure proxy to process AI API calls away from the webpage DOM, adhering to strict manifest V3 standards.
+### Key Technical Highlights:
+* **Shadow DOM UI**: The extension's interface (the floating status box and buttons) is injected into the Coursera webpage using a `Shadow DOM`. This completely isolates the extension's CSS, ensuring Coursera's website styles never break the UI, and the extension never breaks Coursera.
+* **Cross-Frame Message Passing**: CourseFlow uses a sophisticated `postMessage` router to securely communicate between the top-level webpage and Coursera's nested LTI tool iframes to locate and manipulate the hidden video players.
+
+---
 
 ## 🔒 Security Posture
 
-CourseFlow was built with modern extension security standards in mind:
-- **No `innerHTML` usage**: All dynamic data relies on `textContent` and `innerText` to completely eliminate Cross-Site Scripting (XSS) vulnerabilities.
-- **Local Storage Isolation**: Your API keys are stored securely in `chrome.storage.local` within the extension sandbox, invisible to the host webpage.
-- **Service Worker API Fetching**: All AI network requests are routed through a secure background service worker (`background.js`), bypassing Coursera's Content Security Policy and avoiding DOM-based exfiltration.
-- **Strict Message Passing**: The cross-frame messaging architecture strictly validates `event.source === window.parent` to prevent malicious iframe hijacking.
+CourseFlow was engineered with strict security standards to ensure your browser and API keys remain safe.
 
-## 💻 How to Use
+* **API Keys are 100% Safe:** Your API keys are saved exclusively in the extension's isolated `chrome.storage.local`. They are **never** exposed to the web page or the content scripts. Only the isolated Background Service Worker (`background.js`) accesses them to make direct, secure API calls.
+* **Zero XSS Vulnerabilities:** The extension rigorously avoids using `innerHTML` to render external data. All AI responses, quiz questions, and options are securely injected into the DOM using `.textContent`. This guarantees that if a quiz contains malicious HTML script tags, the browser will treat them strictly as plain text.
+* **Strict Permission Scoping:** The extension only requests host permissions for exactly four URLs (Groq, Anthropic, Gemini, and OpenAI APIs) and strictly limits content script execution to `coursera.org/learn/*`.
 
-1. **Install the Extension**: Load the unpacked folder via `chrome://extensions/`.
-2. **Set up AI**: Click the extension icon in your Chrome toolbar, select your preferred **AI Provider** (Groq, Claude, Gemini, or OpenAI), choose a model (or specify a custom one), and enter your API Key.
-3. **Start Auto-Pilot**: When on a Coursera course page, you will see a small floating UI at the bottom right. Click **Start Auto-Pilot** to automatically play and skip through videos.
-4. **Assignment Helper**: When you land on a quiz attempt page, two new buttons will appear in the floating UI:
-   - **Get AI Answers**: Scrapes the quiz, asks the AI, and displays the answers in a floating popup.
-   - **Memorize Mistakes**: If you fail a quiz, click this on the feedback page! It will store the incorrect options so the AI never repeats them on your retry.
+---
+
+## 💻 How to Install & Use
+
+### Installation
+1. Clone or download this repository to your local machine.
+2. Open Google Chrome and navigate to `chrome://extensions/`.
+3. Enable **Developer mode** (toggle switch in the top right corner).
+4. Click **Load unpacked** and select the folder containing this project.
+
+### Setup Your AI
+1. Click the CourseFlow icon in your Chrome toolbar.
+2. Select your preferred **AI Provider** from the visually stunning dashboard.
+3. Choose a model from the dropdown (or enter a custom model ID).
+4. Enter your API Key. (There are direct links in the UI to get your keys if you don't have them).
+5. Click **Save Settings**.
+
+### Using the Extension
+1. **Auto-Pilot:** Navigate to a Coursera course page. You will see a premium, floating CourseFlow UI at the bottom right of the screen. Click the **Start Auto-Pilot** button (or start it from the extension popup). Sit back and watch the animated flow pipeline as it skips your videos!
+2. **Assignments:** When you land on a quiz page, two new buttons will appear in the floating UI:
+   * **Get AI Answers:** Extracts the quiz, sends it to your chosen AI, and displays the correct answers directly on the screen.
+   * **Memorize Mistakes:** If you get a less-than-perfect score, go to the quiz feedback page and click this button. CourseFlow will memorize what you got wrong to ensure a better score on the retry.
+
+---
+
+## 🎨 UI/UX Design
+
+The popup extension interface was completely overhauled to feature a premium, sleek, and high-tech "SaaS" aesthetic. It includes glassmorphism, soft drop shadows, glowing gradient buttons, and a fully animated 3-step pipeline flow diagram that visually reacts when the Auto-Pilot is running, giving you real-time feedback on what the extension is processing behind the scenes.
+
+---
+*Disclaimer: This extension is intended for educational and developmental purposes to demonstrate advanced DOM manipulation, Cross-Origin iframe communication, and AI API integrations. Please adhere to your institution's honor code policies.*
