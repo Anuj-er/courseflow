@@ -35,14 +35,17 @@
     
     const isAttemptPage = window.location.pathname.includes('/attempt');
     const isFeedbackPage = window.location.pathname.includes('/view-feedback');
+    const isPeerReviewPage = window.location.pathname.includes('/give-feedback') || window.location.pathname.includes('/review-next');
 
-    if (isAttemptPage || isFeedbackPage) {
+    if (isAttemptPage || isFeedbackPage || isPeerReviewPage) {
       banner.hidden = true;
       if (skipBtn) skipBtn.hidden = true;
       if (assignmentUI) {
         assignmentUI.hidden = false;
         if (btnGetAnswers) btnGetAnswers.hidden = !isAttemptPage;
         if (btnMemorize) btnMemorize.hidden = !isFeedbackPage;
+        const btnGradePeer = host.shadowRoot.querySelector("#btnGradePeer");
+        if (btnGradePeer) btnGradePeer.hidden = !isPeerReviewPage;
       }
       return;
     }
@@ -274,7 +277,7 @@
 
         .assignment-helper-ui[hidden] { display: none; }
 
-        .btn-get-answers, .btn-memorize {
+        .btn-get-answers, .btn-memorize, .btn-grade-peer {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -291,27 +294,29 @@
         
         .btn-get-answers { color: #10B981; }
         .btn-memorize { color: #8B5CF6; }
+        .btn-grade-peer { color: #F59E0B; }
 
         .btn-get-answers:hover { background: #ECFDF5; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
         .btn-memorize:hover { background: #F5F3FF; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
+        .btn-grade-peer:hover { background: #FFFBEB; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
 
-        .btn-get-answers:active, .btn-memorize:active {
+        .btn-get-answers:active, .btn-memorize:active, .btn-grade-peer:active {
           transform: scale(0.92);
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
         
-        .btn-get-answers svg, .btn-memorize svg {
+        .btn-get-answers svg, .btn-memorize svg, .btn-grade-peer svg {
           width: 28px;
           height: 28px;
           fill: currentColor;
         }
 
-        .btn-get-answers:disabled, .btn-memorize:disabled {
+        .btn-get-answers:disabled, .btn-memorize:disabled, .btn-grade-peer:disabled {
           opacity: 0.7;
           cursor: wait;
           animation: btnPulse 1s infinite ease-in-out;
         }
-        .btn-get-answers[hidden], .btn-memorize[hidden] { display: none; }
+        .btn-get-answers[hidden], .btn-memorize[hidden], .btn-grade-peer[hidden] { display: none; }
 
         .answers-div {
           background: #ffffff;
@@ -353,6 +358,9 @@
           <button id="btnMemorize" class="btn-memorize" hidden title="Memorize Mistakes">
             <svg viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
           </button>
+          <button id="btnGradePeer" class="btn-grade-peer" hidden title="Grade Peer (Max Score)">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+          </button>
           <div id="answersDiv" class="answers-div" hidden></div>
         </div>
 
@@ -388,10 +396,15 @@
     const btnMemorize = shadow.querySelector("#btnMemorize");
     const btnGetAnswers = shadow.querySelector("#btnGetAnswers");
     const answersDiv = shadow.querySelector("#answersDiv");
+    const btnGradePeer = shadow.querySelector("#btnGradePeer");
     
     // Assignment Helper Logic Setup
     if (CF.setupAssignmentListeners) {
       CF.setupAssignmentListeners(btnGetAnswers, btnMemorize, answersDiv);
+    }
+    
+    if (CF.setupPeerReviewListeners) {
+      CF.setupPeerReviewListeners(btnGradePeer, statusEl);
     }
 
     // Ensure the banner is updated immediately upon installation

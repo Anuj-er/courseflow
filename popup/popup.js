@@ -92,6 +92,7 @@ async function triggerAutopilot() {
         "modules/messaging.js",
         "modules/autopilot.js",
         "modules/assignment.js",
+        "modules/peer-review.js",
         "modules/ui.js",
         "content.js"
       ]
