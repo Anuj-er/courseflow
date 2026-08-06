@@ -20,6 +20,11 @@
       ],
       "js": [
         "video-skipper-core.js",
+        "modules/utils.js",
+        "modules/messaging.js",
+        "modules/autopilot.js",
+        "modules/assignment.js",
+        "modules/ui.js",
         "content.js"
       ],
       "all_frames": true,
