@@ -59,7 +59,7 @@ CourseFlow was built with modern extension security standards in mind:
 
 ## 🔮 Upcoming Features
 
-We are actively expanding CourseFlow to become the ultimate learning copilot. The roadmap includes:
+I am actively expanding CourseFlow to become the ultimate learning copilot. The roadmap includes:
 - **Automatic Peer Review System**: AI-driven analysis of peer-graded assignments to help you provide constructive, high-quality reviews automatically.
-- **Multiple AI Model Support**: Soon, you won't be limited to just Groq. We are adding native support for **Google Gemini** and **Anthropic Claude**.
+- **Multiple AI Model Support**: Soon, you won't be limited to just Groq. I am adding native support for **Google Gemini** and **Anthropic Claude**.
 - **Model Selection UI**: A new settings panel to easily toggle between models based on your preference for speed (Groq) or complex reasoning (Claude/Gemini).
