@@ -27,7 +27,7 @@ graph TD
     G <-->|postMessage| H(modules/messaging.js)
     
     E -->|Reads via DOM| I[Extract Quiz Data]
-    I -->|API Call| J[Groq API (Llama 3)]
+    I -->|API Call| J["Groq API (Llama 3)"]
     
     K[Popup Interface] -->|Updates Settings| L[(chrome.storage.local)]
     E -.->|Reads Key| L
